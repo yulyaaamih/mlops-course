@@ -20,7 +20,8 @@ from pathlib import Path
 import joblib
 import numpy as np
 import pandas as pd
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import GradientBoostingClassifier, RandomForestClassifier
+from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import average_precision_score, f1_score, roc_auc_score
 from sklearn.pipeline import Pipeline
 
@@ -34,6 +35,13 @@ log = setup_logging()
 MODEL_PATH = "models/model.joblib"
 METRICS_PATH = "reports/train_metrics.json"
 
+# Имя модели из params["train"]["model"] -> класс sklearn
+MODELS = {
+    "logreg": LogisticRegression,
+    "random_forest": RandomForestClassifier,
+    "gradient_boosting": GradientBoostingClassifier,
+}
+
 
 def load_data(path: Path) -> pd.DataFrame:
     df = pd.read_csv(path)
@@ -46,10 +54,14 @@ def split_xy(df: pd.DataFrame, params: dict) -> tuple[pd.DataFrame, pd.Series]:
 
 
 def build_model(params: dict) -> Pipeline:
-    # TODO (занятие 3): гиперпараметры леса из params.yaml
+    name = params["train"]["model"]
+    if name not in MODELS:
+        raise ValueError(f"неизвестная модель {name!r}, допустимые: {list(MODELS)}")
+    hyperparams = params["train"][name]
+    log.info("модель: %s, гиперпараметры: %s", name, hyperparams)
     return Pipeline([
         ("preprocessor", build_preprocessor(params)),
-        ("model", RandomForestClassifier(random_state=params["seed"])),
+        ("model", MODELS[name](**hyperparams, random_state=params["seed"])),
     ])
 
 
@@ -90,7 +102,7 @@ def main() -> None:
     X_train, y_train = split_xy(train_df, params)
     X_val, y_val = split_xy(val_df, params)
 
-    # 3. Сборка Pipeline (препроцессор + RandomForest)
+    # 3. Сборка Pipeline (препроцессор + модель из params["train"]["model"])
     model = build_model(params)
 
     # 4. Обучение на train
