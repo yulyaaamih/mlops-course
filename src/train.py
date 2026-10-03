@@ -12,6 +12,7 @@ TODO (занятие 1): перенести сюда логику из notebooks
 
 Запуск: python -m src.train
 """
+
 from __future__ import annotations
 
 import json
@@ -59,10 +60,12 @@ def build_model(params: dict) -> Pipeline:
         raise ValueError(f"неизвестная модель {name!r}, допустимые: {list(MODELS)}")
     hyperparams = params["train"][name]
     log.info("модель: %s, гиперпараметры: %s", name, hyperparams)
-    return Pipeline([
-        ("preprocessor", build_preprocessor(params)),
-        ("model", MODELS[name](**hyperparams, random_state=params["seed"])),
-    ])
+    return Pipeline(
+        [
+            ("preprocessor", build_preprocessor(params)),
+            ("model", MODELS[name](**hyperparams, random_state=params["seed"])),
+        ]
+    )
 
 
 def predict(model: Pipeline, X: pd.DataFrame) -> tuple[np.ndarray, np.ndarray]:
@@ -87,6 +90,7 @@ def save_metrics(metrics: dict[str, float], path: Path) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     with open(path, "w", encoding="utf-8") as f:
         json.dump(metrics, f, indent=2)
+        f.write("\n")  # end-of-file-fixer требует перевод строки в конце файла
     log.info("метрики сохранены в %s", path)
 
 

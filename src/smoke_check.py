@@ -1,4 +1,5 @@
 """Проверка окружения перед первым занятием: python -m src.smoke_check"""
+
 from __future__ import annotations
 
 import importlib
@@ -30,8 +31,10 @@ def main() -> int:
 
     recommended = (3, 11)
     if sys.version_info < recommended:
-        print("\nвнимание: курс рассчитан на Python 3.11, у вас "
-              f"{sys.version_info.major}.{sys.version_info.minor} — часть шагов может отличаться")
+        print(
+            "\nвнимание: курс рассчитан на Python 3.11, у вас "
+            f"{sys.version_info.major}.{sys.version_info.minor} — часть шагов может отличаться"
+        )
     if missing:
         print(f"\nenvironment: FAIL — не установлены: {', '.join(missing)}")
         print("исправление: pip install -r requirements.txt -r requirements-dev.txt")

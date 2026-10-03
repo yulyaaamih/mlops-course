@@ -8,6 +8,7 @@ TODO (занятие 1):
 
 Проверка: два запуска подряд должны дать одинаковые файлы.
 """
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -37,9 +38,7 @@ def validate_columns(df: pd.DataFrame, params: dict) -> None:
 def fill_missing(df: pd.DataFrame) -> pd.DataFrame:
     df = df.copy()
     mask = df["total_charges"].isna()
-    df.loc[mask, "total_charges"] = (
-        df.loc[mask, "monthly_charges"] * df.loc[mask, "tenure_months"]
-    ).round(2)
+    df.loc[mask, "total_charges"] = (df.loc[mask, "monthly_charges"] * df.loc[mask, "tenure_months"]).round(2)
     log.info("заполнено пропусков в total_charges: %s", int(mask.sum()))
     return df
 
@@ -49,9 +48,7 @@ def split(
 ) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
 
     # отрезаем test_df, остаётся part_df
-    part_df, test_df = train_test_split(
-        df, test_size=test_size, stratify=df[TARGET], random_state=seed
-    )
+    part_df, test_df = train_test_split(df, test_size=test_size, stratify=df[TARGET], random_state=seed)
     # val_size задан в долях от всего датасета, а отделяем мы его от остатка —
     # поэтому долю пересчитываем
     val_share = val_size / (1 - test_size)
@@ -68,8 +65,7 @@ def save_splits(splits: dict[str, pd.DataFrame], out_dir: Path) -> None:
     for name, part in splits.items():
         path = out_dir / f"{name}.csv"
         part.to_csv(path, index=False)
-        log.info("%s: %s строк, churn rate=%.3f -> %s",
-                 name, len(part), part[TARGET].mean(), path)
+        log.info("%s: %s строк, churn rate=%.3f -> %s", name, len(part), part[TARGET].mean(), path)
 
 
 def main() -> None:

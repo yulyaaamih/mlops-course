@@ -1,5 +1,6 @@
 """Первый тест проекта: проверяет, что окружение и конфиг живы.
 Настоящие тесты появятся на занятии 8."""
+
 from __future__ import annotations
 
 from src.config import load_params
