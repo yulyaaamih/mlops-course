@@ -11,13 +11,23 @@ data:
   test_size: 0.2
   val_size: 0.1
 
-# Занятие 1: TODO - студент заполняет список признаков из baseline_notebook.py
-# Структура: 3 типа признаков (numeric, categorical, binary)
-# Подсказка: посмотри какие колонки какого типа в данных
+# Занятие 1
+# Признаки модели по типам. customer_id (идентификатор) и churn (таргет)
+# сюда намеренно не входят.
 features:
-  numeric: []  # TODO: заполни числовые признаки
-  categorical: []  # TODO: заполни категориальные признаки
-  binary: []  # TODO: заполни бинарные признаки
+  numeric:
+    - tenure_months
+    - monthly_charges
+    - total_charges
+    - num_support_calls
+    - avg_monthly_gb
+  categorical:
+    - contract_type
+    - internet_service
+    - payment_method
+  binary:
+    - has_tech_support
+    - is_senior
 
 # TODO (занятие 3): перенести сюда гиперпараметры модели
 train:
