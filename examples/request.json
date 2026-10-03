@@ -1,0 +1,12 @@
+{
+  "tenure_months": 3,
+  "monthly_charges": 89.4,
+  "total_charges": 268.2,
+  "contract_type": "month-to-month",
+  "internet_service": "fiber",
+  "payment_method": "electronic_check",
+  "num_support_calls": 4,
+  "has_tech_support": 0,
+  "is_senior": 0,
+  "avg_monthly_gb": 61.3
+}

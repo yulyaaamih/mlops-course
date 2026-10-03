@@ -1,0 +1,25 @@
+[project]
+name = "churn-mlops"
+version = "1.0.0"
+description = "Сквозной учебный проект курса MLOps: сервис предсказания оттока"
+requires-python = ">=3.9"
+
+[tool.ruff]
+line-length = 110
+target-version = "py39"   # код работает и на 3.9; курс рекомендует 3.11
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+ignore = [
+    "E501",
+    "UP045",  # Optional[...] вместо X | None: pydantic вычисляет аннотации
+              # в рантайме, а X | None требует Python 3.10+
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q --strict-markers"
+markers = [
+    "slow: тесты, требующие обучения модели",
+    "integration: тесты, требующие поднятого стенда",
+]

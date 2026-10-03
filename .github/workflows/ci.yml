@@ -1,0 +1,58 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Установить зависимости
+        run: |
+          python -m pip install -U pip
+          pip install -r requirements.txt -r requirements-dev.txt
+
+      - name: Линтер
+        run: ruff check src tests
+
+      - name: Тесты
+        run: pytest --cov=src --cov-report=term-missing
+
+  pipeline:
+    # Отдельный job: воспроизведение пайплайна дольше тестов, и падать
+    # оно должно отдельно — тогда по красному чек-боксу сразу понятно, что сломалось.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - run: pip install -r requirements.txt
+
+      - name: Воспроизвести пайплайн
+        # На маленькой выборке: в CI нужна проверка, что пайплайн жив,
+        # а не полное обучение на 20k строк.
+        run: |
+          python -m src.data.generate --n 4000
+          python -m src.data.prepare
+          python -m src.train --no-mlflow
+          python -m src.evaluate
+
+      - name: Опубликовать метрики
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: metrics
+          path: reports/

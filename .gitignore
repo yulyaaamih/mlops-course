@@ -1,0 +1,35 @@
+# Окружение
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Данные и модели — в DVC, не в Git
+/data/
+/models/
+
+# Метрики и отчёты — маленькие, их держим в Git:
+# так работают `dvc metrics diff` и сравнение между коммитами
+/reports/*
+!/reports/.gitkeep
+!/reports/*.json
+!/reports/*.md
+
+# MLflow локальный бэкенд
+mlruns/
+mlartifacts/
+mlflow.db
+
+# Секреты
+.env
+*.pem
+*.key
+
+# IDE / ОС
+.idea/
+.vscode/
+.DS_Store
