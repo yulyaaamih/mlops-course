@@ -45,3 +45,7 @@ train:
     n_estimators: 200
     learning_rate: 0.05
     max_depth: 3
+
+evaluate:
+  threshold: 0.5
+  min_roc_auc: 0.75

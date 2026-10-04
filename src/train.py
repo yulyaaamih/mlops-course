@@ -98,6 +98,8 @@ def main() -> None:
     params = load_params()
     processed_dir = resolve(params["data"]["processed_dir"])
 
+    np.random.seed(params["seed"])
+
     # 1. Загрузка train и val
     train_df = load_data(processed_dir / "train.csv")
     val_df = load_data(processed_dir / "val.csv")
