@@ -16,6 +16,8 @@ TODO (занятие 1): перенести сюда логику из notebooks
 from __future__ import annotations
 
 import json
+import platform
+import subprocess
 from pathlib import Path
 
 import joblib
@@ -26,7 +28,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import average_precision_score, f1_score, roc_auc_score
 from sklearn.pipeline import Pipeline
 
-from src.config import TARGET, feature_columns, load_params, resolve
+from src.config import PROJECT_ROOT, TARGET, feature_columns, load_params, resolve
 from src.features import build_preprocessor
 from src.logging_setup import setup_logging
 
@@ -35,6 +37,7 @@ log = setup_logging()
 # TODO (занятие 5): пути стадий перенести в params.yaml
 MODEL_PATH = "models/model.joblib"
 METRICS_PATH = "reports/train_metrics.json"
+META_PATH = "models/model_meta.json"
 
 # Имя модели из params["train"]["model"] -> класс sklearn
 MODELS = {
@@ -94,6 +97,38 @@ def save_metrics(metrics: dict[str, float], path: Path) -> None:
     log.info("метрики сохранены в %s", path)
 
 
+def save_meta(meta: dict, path: Path) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(meta, f, indent=2)
+        f.write("\n")
+    log.info("метаданные модели сохранены в %s", path)
+
+
+def get_git_sha() -> str:
+    try:
+        result = subprocess.run(
+            ["git", "rev-parse", "--short", "HEAD"],
+            capture_output=True,
+            text=True,
+            check=True,
+            cwd=PROJECT_ROOT,
+        )
+    except (OSError, subprocess.CalledProcessError):
+        return "unknown"
+    return result.stdout.strip()
+
+
+def build_meta(params: dict, metrics: dict[str, float]) -> dict:
+    return {
+        "model": params["train"]["model"],
+        "git_sha": get_git_sha(),
+        "python_version": platform.python_version(),
+        "features": feature_columns(params),
+        "val_metrics": metrics,
+    }
+
+
 def main() -> None:
     params = load_params()
     processed_dir = resolve(params["data"]["processed_dir"])
@@ -127,6 +162,9 @@ def main() -> None:
 
     # 8. Сохранение метрик
     save_metrics(metrics, resolve(METRICS_PATH))
+
+    # 9. Сохранение метаданных модели (git sha, версия Python, признаки, метрики на val)
+    save_meta(build_meta(params, metrics), resolve(META_PATH))
 
 
 if __name__ == "__main__":
