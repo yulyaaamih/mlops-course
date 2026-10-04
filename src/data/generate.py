@@ -9,6 +9,7 @@
 на исходном распределении, на таких данных деградирует — это и разбирается
 на занятии про мониторинг.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -31,8 +32,8 @@ def generate(n: int, seed: int, drift: bool = False) -> pd.DataFrame:
     rng = np.random.default_rng(seed)
 
     if drift:
-        contract_p = [0.62, 0.24, 0.14]      # больше клиентов без обязательств
-        internet_p = [0.58, 0.30, 0.12]      # оптика вытеснила DSL
+        contract_p = [0.62, 0.24, 0.14]  # больше клиентов без обязательств
+        internet_p = [0.58, 0.30, 0.12]  # оптика вытеснила DSL
         charges_shift, calls_shift = 12.0, 0.6
     else:
         contract_p = [0.50, 0.29, 0.21]
@@ -108,8 +109,9 @@ def main() -> None:
 
     df = generate(n=n, seed=seed, drift=args.drift)
     df.to_csv(out, index=False)
-    log.info("написано %s строк в %s (drift=%s, churn rate=%.3f)",
-             len(df), out, args.drift, df["churn"].mean())
+    log.info(
+        "написано %s строк в %s (drift=%s, churn rate=%.3f)", len(df), out, args.drift, df["churn"].mean()
+    )
 
 
 if __name__ == "__main__":
