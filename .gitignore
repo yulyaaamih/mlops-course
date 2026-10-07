@@ -8,9 +8,11 @@ __pycache__/
 .coverage
 htmlcov/
 
-# Данные и модели — в DVC, не в Git
-/data/
-/models/
+# Данные и модели — в DVC, не в Git.
+# Сами файлы churn.csv и model.joblib скрывает DVC (data/raw/.gitignore,
+# models/.gitignore), здесь только то, что DVC не отслеживает.
+/data/processed/
+/models/model_meta.json
 
 # Метрики и отчёты — маленькие, их держим в Git:
 # так работают `dvc metrics diff` и сравнение между коммитами
