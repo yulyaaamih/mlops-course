@@ -1,4 +1,5 @@
 [core]
-    remote = localremote
-['remote "localremote"']
-    url = /Users/juliamikhailova/dvcstore
+    remote = minio
+['remote "minio"']
+    url = s3://mlops/churn
+    endpointurl = http://localhost:9000
