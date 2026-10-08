@@ -36,6 +36,97 @@ make train                         # обучить модель, метрики
 `train.model` на `logreg`, `random_forest` или `gradient_boosting` — код при
 этом не меняется.
 
+## Данные
+
+Датасет `data/raw/churn.csv` и модель `models/model.joblib` версионируются
+через [DVC](https://dvc.org). В Git лежат только маленькие файлы-указатели
+`data/raw/churn.csv.dvc` и `models/model.joblib.dvc` с md5 содержимого. Сами
+файлы хранятся в remote-хранилище. Описание датасета, полей и известных
+дефектов — в [data/README.md](data/README.md).
+
+### Где лежит remote
+
+Remote по умолчанию называется `minio`. Это S3-совместимое хранилище
+[MinIO](https://min.io):
+
+| Параметр | Значение |
+|---|---|
+| бакет и путь | `s3://mlops/churn` |
+| адрес (endpoint) | `http://localhost:9000` |
+| веб-консоль | `http://localhost:9001` |
+
+Настройки лежат в `.dvc/config`. MinIO запущен в Docker на машине автора
+проекта, поэтому `localhost` подходит только ей. Остальным нужно либо
+подключиться к её MinIO по адресу в локальной сети, либо поднять свой
+(см. ниже).
+
+### Как получить данные
+
+```bash
+dvc remote modify --local minio access_key_id <ключ>
+dvc remote modify --local minio secret_access_key <секрет>
+dvc pull
+```
+
+`dvc pull` скачает версии данных и модели, на которые указывают `.dvc`-файлы
+в текущем коммите. Ключи можно не прописывать через `dvc remote modify`, а
+передать переменными окружения `AWS_ACCESS_KEY_ID` и `AWS_SECRET_ACCESS_KEY`
+(их имена есть в `.env.example`).
+
+Флаг `--local` записывает настройки в `.dvc/config.local`. Этот файл не
+попадает в Git, поэтому ключи не утекут в репозиторий.
+
+### Новому участнику проекта
+
+1. Склонируйте репозиторий и установите зависимости (раздел «Как запустить»).
+   DVC ставится вместе с ними через `make install`.
+2. Получите доступ к хранилищу. Есть два варианта:
+   - **Подключиться к общему MinIO.** Попросите у автора адрес и ключи и
+     пропишите их у себя:
+     ```bash
+     dvc remote modify --local minio endpointurl http://<адрес>:9000
+     dvc remote modify --local minio access_key_id <ключ>
+     dvc remote modify --local minio secret_access_key <секрет>
+     ```
+   - **Поднять свой MinIO.** Пригодится, если общий недоступен:
+     ```bash
+     docker run -d --name minio -p 9000:9000 -p 9001:9001 \
+       -v ~/minio-data:/data quay.io/minio/minio server /data --console-address ":9001"
+     ```
+     Затем в веб-консоли `http://localhost:9001` создайте бакет `mlops`.
+     Своё хранилище будет пустым. Сгенерируйте данные (`make data`), это даст
+     тот же файл, что и в DVC: при тех же `seed` и `n_samples` md5 совпадает.
+     После этого выполните `dvc push`.
+3. Выполните `dvc pull`. Проверьте, что `wc -l data/raw/churn.csv` выдаёт
+   `20001`, а `dvc status` пишет, что всё синхронизировано.
+4. Дальше работайте как обычно: `make prepare`, `make train`.
+
+**Если вы поменяли данные или модель:**
+
+```bash
+dvc add data/raw/churn.csv          # или models/model.joblib
+git add data/raw/churn.csv.dvc
+git commit -m "..."
+dvc push                            # без этого другие не смогут скачать новую версию
+```
+
+**Если нужна старая версия данных:** переключитесь на нужный коммит
+(`git checkout <коммит>`) и выполните `dvc checkout`. Пример с выводом
+терминала — в [reports/ROLLBACK.md](reports/ROLLBACK.md).
+
+### Почему `.dvc`-файл коммитим, а датасет — нет
+
+В `.dvc`-файле записан md5 данных, весит он меньше 100 байт. Он лежит в Git,
+поэтому у каждого коммита своя версия данных: `git checkout` + `dvc checkout`
+возвращают и код, и данные. Сам CSV хранится в DVC-кэше и в MinIO.
+
+Датасет в Git не кладём: Git хранит каждую версию файла целиком и навсегда,
+репозиторий быстро пухнет, а у GitHub лимит 100 МБ на файл.
+
+Если сделать наоборот, DVC перестанет работать. Без `.dvc`-файла в клоне
+`dvc pull` не знает, что скачивать, откатить данные нельзя, и уже не понять,
+на какой версии данных обучена модель.
+
 ## Результаты экспериментов
 
 Метрики на val, подробности и вывод — в [reports/EXPERIMENTS.md](reports/EXPERIMENTS.md).
