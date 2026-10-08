@@ -1,0 +1,71 @@
+stages:
+  generate:
+    cmd: python -m src.data.generate
+    deps:
+      - src/data/generate.py
+    params:
+      - seed
+      - data.n_samples
+    outs:
+      - data/raw/churn.csv
+  prepare:
+      cmd: python -m src.data.prepare
+      deps:
+        - src/data/prepare.py
+        - data/raw/churn.csv
+      params:
+        - seed
+        - data.test_size
+        - data.val_size
+      outs:
+        - data/processed/train.csv
+        - data/processed/val.csv
+        - data/processed/test.csv
+
+  validate:
+    cmd: python -m src.data.validate
+    deps:
+      - src/data/validate.py
+      - data/processed/train.csv
+    params:
+      - validate
+    metrics:
+      - reports/validation.json:
+          cache: false
+
+  train:
+    cmd: python -m src.train
+    deps:
+      - src/train.py
+      - src/features.py
+      - data/raw/churn.csv
+      - data/processed/train.csv
+      - data/processed/val.csv
+      - reports/validation.json
+    params:
+      - seed
+      - features
+      - train
+    outs:
+      - models/model.joblib
+      - models/model_meta.json
+    metrics:
+      - reports/train_metrics.json:
+          cache: false
+
+  evaluate:
+    cmd: python -m src.evaluate
+    deps:
+      - src/evaluate.py
+      - models/model.joblib
+      - data/processed/test.csv
+    params:
+      - evaluate
+    metrics:
+      - reports/eval_metrics.json:
+          cache: false
+    plots:
+      - reports/roc.json:
+          x: fpr
+          y: tpr
+          cache: false

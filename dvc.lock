@@ -1,0 +1,170 @@
+schema: '2.0'
+stages:
+  generate:
+    cmd: python -m src.data.generate
+    deps:
+    - path: src/data/generate.py
+      hash: md5
+      md5: e65e0f35dfe3337d773ba76e594bf3bd
+      size: 5163
+    params:
+      params.yaml:
+        data.n_samples: 20000
+        seed: 42
+    outs:
+    - path: data/raw/churn.csv
+      hash: md5
+      md5: a0038705ffe95c3e1856f5f58bb0cbff
+      size: 1408863
+  prepare:
+    cmd: python -m src.data.prepare
+    deps:
+    - path: data/raw/churn.csv
+      hash: md5
+      md5: a0038705ffe95c3e1856f5f58bb0cbff
+      size: 1408863
+    - path: src/data/prepare.py
+      hash: md5
+      md5: 922ea8b2272807ba38e496af6b3c8f7e
+      size: 3399
+    params:
+      params.yaml:
+        data.test_size: 0.2
+        data.val_size: 0.1
+        seed: 42
+    outs:
+    - path: data/processed/test.csv
+      hash: md5
+      md5: 10a09eccbbfb6978e8e6dff4b88fedda
+      size: 282622
+    - path: data/processed/train.csv
+      hash: md5
+      md5: a6d574ff32b4a79d8792a30549bcce3e
+      size: 986893
+    - path: data/processed/val.csv
+      hash: md5
+      md5: e9ec2f415bae8d1dd1eb1db6898b3951
+      size: 140971
+  train:
+    cmd: python -m src.train
+    deps:
+    - path: data/processed/train.csv
+      hash: md5
+      md5: a6d574ff32b4a79d8792a30549bcce3e
+      size: 986893
+    - path: data/processed/val.csv
+      hash: md5
+      md5: e9ec2f415bae8d1dd1eb1db6898b3951
+      size: 140971
+    - path: data/raw/churn.csv
+      hash: md5
+      md5: a0038705ffe95c3e1856f5f58bb0cbff
+      size: 1408863
+    - path: reports/validation.json
+      hash: md5
+      md5: 684425bb68e8bf698cac000b1481e968
+      size: 703
+    - path: src/features.py
+      hash: md5
+      md5: 14ab080d3c571795f085754d5259292e
+      size: 2059
+    - path: src/train.py
+      hash: md5
+      md5: f7889948b0b18fa7c449bf488993842b
+      size: 6053
+    params:
+      params.yaml:
+        features:
+          numeric:
+          - tenure_months
+          - monthly_charges
+          - total_charges
+          - num_support_calls
+          - avg_monthly_gb
+          categorical:
+          - contract_type
+          - internet_service
+          - payment_method
+          binary:
+          - has_tech_support
+          - is_senior
+        seed: 42
+        train:
+          model: logreg
+          logreg:
+            C: 1.0
+            max_iter: 1000
+          random_forest:
+            n_estimators: 157
+            max_depth: 9
+            min_samples_leaf: 3
+          gradient_boosting:
+            n_estimators: 200
+            learning_rate: 0.05
+            max_depth: 3
+    outs:
+    - path: models/model.joblib
+      hash: md5
+      md5: 5e2376954ce4e514b5b74874bde04d42
+      size: 5674
+    - path: models/model_meta.json
+      hash: md5
+      md5: 4b62d274199c75c5ea41824afa3754ba
+      size: 491
+    - path: reports/train_metrics.json
+      hash: md5
+      md5: 0fa6482b8408c40c4f63b8046094a6dc
+      size: 96
+  evaluate:
+    cmd: python -m src.evaluate
+    deps:
+    - path: data/processed/test.csv
+      hash: md5
+      md5: 10a09eccbbfb6978e8e6dff4b88fedda
+      size: 282622
+    - path: models/model.joblib
+      hash: md5
+      md5: 5e2376954ce4e514b5b74874bde04d42
+      size: 5674
+    - path: src/evaluate.py
+      hash: md5
+      md5: 2636d71a1bf82b5573afc57c1c6cc238
+      size: 2800
+    params:
+      params.yaml:
+        evaluate:
+          threshold: 0.5
+          min_roc_auc: 0.75
+    outs:
+    - path: reports/eval_metrics.json
+      hash: md5
+      md5: 7ab4eec675554e8f14c30c4f97a0d973
+      size: 95
+    - path: reports/roc.json
+      hash: md5
+      md5: a645b409a07822bfa32b8cc022cd3bd8
+      size: 80847
+  validate:
+    cmd: python -m src.data.validate
+    deps:
+    - path: data/processed/train.csv
+      hash: md5
+      md5: a6d574ff32b4a79d8792a30549bcce3e
+      size: 986893
+    - path: src/data/validate.py
+      hash: md5
+      md5: ed0a618a03dcfdfa8f1a3c011783e913
+      size: 2450
+    params:
+      params.yaml:
+        validate:
+          min_rows: 5000
+          max_missing_share: 0.05
+          target_rate:
+          - 0.05
+          - 0.6
+    outs:
+    - path: reports/validation.json
+      hash: md5
+      md5: 684425bb68e8bf698cac000b1481e968
+      size: 703

@@ -5,11 +5,14 @@
 
 from __future__ import annotations
 
+import json
 import sys
+from pathlib import Path
 
 import joblib
 import numpy as np
 import pandas as pd
+from sklearn.metrics import roc_curve
 from sklearn.pipeline import Pipeline
 
 from src.config import load_params, resolve
@@ -19,11 +22,21 @@ from src.train import MODEL_PATH, compute_metrics, load_data, save_metrics, spli
 log = setup_logging()
 
 EVAL_METRICS_PATH = "reports/eval_metrics.json"
+ROC_PATH = "reports/roc.json"
 
 
 def predict(model: Pipeline, X: pd.DataFrame, threshold: float) -> tuple[np.ndarray, np.ndarray]:
     proba = model.predict_proba(X)[:, 1]
     return proba, (proba >= threshold).astype(int)
+
+
+def save_roc_curve(y_true: pd.Series, proba: np.ndarray, path: Path) -> None:
+    fpr, tpr, _ = roc_curve(y_true, proba)
+    points = [{"fpr": float(f), "tpr": float(t)} for f, t in zip(fpr, tpr)]
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump({"roc": points}, f, indent=2)
+    log.info("ROC-кривая сохранена в %s", path)
 
 
 def is_quality_ok(metrics: dict[str, float], min_roc_auc: float) -> bool:
@@ -54,6 +67,7 @@ def main() -> None:
 
     # 5. Сохранение метрик (до проверки порога: файл нужен, даже если порог не пройден)
     save_metrics(metrics, resolve(EVAL_METRICS_PATH))
+    save_roc_curve(y_test, proba, resolve(ROC_PATH))
 
     # 6. Проверка порога качества: ниже min_roc_auc — выход с кодом 1
     if not is_quality_ok(metrics, cfg["min_roc_auc"]):
