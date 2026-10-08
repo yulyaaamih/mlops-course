@@ -23,6 +23,7 @@ from pathlib import Path
 import joblib
 import numpy as np
 import pandas as pd
+import yaml
 from sklearn.ensemble import GradientBoostingClassifier, RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import average_precision_score, f1_score, roc_auc_score
@@ -119,10 +120,17 @@ def get_git_sha() -> str:
     return result.stdout.strip()
 
 
+def get_data_md5(params: dict) -> str:
+    dvc_file = resolve(params["data"]["raw_path"] + ".dvc")
+    with open(dvc_file, encoding="utf-8") as f:
+        return yaml.safe_load(f)["outs"][0]["md5"]
+
+
 def build_meta(params: dict, metrics: dict[str, float]) -> dict:
     return {
         "model": params["train"]["model"],
         "git_sha": get_git_sha(),
+        "data_md5": get_data_md5(params),
         "python_version": platform.python_version(),
         "features": feature_columns(params),
         "val_metrics": metrics,
