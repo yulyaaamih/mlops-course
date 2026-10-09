@@ -62,16 +62,16 @@ ROC-AUC не зависит от порога: он показывает, нас
 
 | Коммит | Что поменяли |
 |---|---|
-| `0b1d470` | исходное состояние: `logreg`, C=1.0 |
-| `271ff2b` | `logreg C=0.1` |
-| `3c34e1d` | `random_forest max_depth=5` (было 9) |
-| `43de3a2` | `gradient_boosting learning_rate=0.1` (было 0.05) |
+| `fe54b7a` | исходное состояние: `logreg`, C=1.0 |
+| `100f9d4` | `logreg C=0.1` |
+| `e6a5734` | `random_forest max_depth=5` (было 9) |
+| `c5c953c` | `gradient_boosting learning_rate=0.1` (было 0.05) |
 
 ### 1. `logreg C=0.1`
 
-`dvc metrics diff 0b1d470 271ff2b`
+`dvc metrics diff fe54b7a 100f9d4`
 
-| Path                       | Metric   | 0b1d470   | 271ff2b   | Change   |
+| Path                       | Metric   | fe54b7a   | 100f9d4   | Change   |
 |----------------------------|----------|-----------|-----------|----------|
 | reports/eval_metrics.json  | f1       | 0.4187    | 0.413     | -0.0057  |
 | reports/eval_metrics.json  | pr_auc   | 0.5288    | 0.5286    | -0.0002  |
@@ -82,9 +82,9 @@ ROC-AUC не зависит от порога: он показывает, нас
 
 ### 2. `random_forest max_depth=5`
 
-`dvc metrics diff 271ff2b 3c34e1d`
+`dvc metrics diff 100f9d4 e6a5734`
 
-| Path                       | Metric   | 271ff2b   | 3c34e1d   | Change   |
+| Path                       | Metric   | 100f9d4   | e6a5734   | Change   |
 |----------------------------|----------|-----------|-----------|----------|
 | reports/train_metrics.json | f1       | 0.3822    | 0.2915    | -0.0907  |
 | reports/train_metrics.json | pr_auc   | 0.5195    | 0.4955    | -0.024   |
@@ -95,9 +95,9 @@ ROC-AUC не зависит от порога: он показывает, нас
 
 ### 3. `gradient_boosting learning_rate=0.1`
 
-`dvc metrics diff 3c34e1d 43de3a2`
+`dvc metrics diff e6a5734 c5c953c`
 
-| Path                       | Metric   | 3c34e1d   | 43de3a2   | Change   |
+| Path                       | Metric   | e6a5734   | c5c953c   | Change   |
 |----------------------------|----------|-----------|-----------|----------|
 | reports/eval_metrics.json  | f1       | 0.2975    | 0.4126    | 0.1151   |
 | reports/eval_metrics.json  | pr_auc   | 0.4987    | 0.5072    | 0.0085   |
