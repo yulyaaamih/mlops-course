@@ -21,6 +21,9 @@ htmlcov/
 !/reports/*.json
 !/reports/*.md
 
+# HTML с графиками от `dvc plots show`, пересоздаётся из reports/roc.json
+/dvc_plots/
+
 # MLflow локальный бэкенд
 mlruns/
 mlartifacts/
