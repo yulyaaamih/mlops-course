@@ -35,13 +35,13 @@ features:
 # train.model выбирает, какую из секций ниже передать в build_model.
 # random_state не задаём: в модель передаётся общий seed.
 train:
-  model: logreg            # logreg | random_forest | gradient_boosting
+  model: random_forest     # logreg | random_forest | gradient_boosting
   logreg:
     C: 0.1
     max_iter: 1000
   random_forest:           # значения из baseline_notebook.py
     n_estimators: 157
-    max_depth: 9
+    max_depth: 5
     min_samples_leaf: 3
   gradient_boosting:
     n_estimators: 200
