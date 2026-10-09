@@ -90,7 +90,7 @@ stages:
           - is_senior
         seed: 42
         train:
-          model: random_forest
+          model: gradient_boosting
           logreg:
             C: 0.1
             max_iter: 1000
@@ -100,21 +100,21 @@ stages:
             min_samples_leaf: 3
           gradient_boosting:
             n_estimators: 200
-            learning_rate: 0.05
+            learning_rate: 0.1
             max_depth: 3
     outs:
     - path: models/model.joblib
       hash: md5
-      md5: ee5552ae46aa30484b40540c29edc0e6
-      size: 859867
+      md5: 6e8e8b2bdb3102c861b39328d9932b5f
+      size: 274829
     - path: models/model_meta.json
       hash: md5
-      md5: 04b854210d9426db350a9b8d7f92380c
-      size: 498
+      md5: ca03054075ca2fc4f3d805d888809e8e
+      size: 503
     - path: reports/train_metrics.json
       hash: md5
-      md5: 77dc534698135e6cb4954d6243074c5c
-      size: 96
+      md5: ee3341d2b61f0e8a727fe7651dd6a5b0
+      size: 97
   evaluate:
     cmd: python -m src.evaluate
     deps:
@@ -124,8 +124,8 @@ stages:
       size: 282622
     - path: models/model.joblib
       hash: md5
-      md5: ee5552ae46aa30484b40540c29edc0e6
-      size: 859867
+      md5: 6e8e8b2bdb3102c861b39328d9932b5f
+      size: 274829
     - path: src/evaluate.py
       hash: md5
       md5: 66d6bb7ea52c6cbe105cb2acc0449164
@@ -138,12 +138,12 @@ stages:
     outs:
     - path: reports/eval_metrics.json
       hash: md5
-      md5: 5862a279430b3060846613c7b6da1942
-      size: 97
+      md5: 3cf7248aa3be4a9656df8bfcbb1daf10
+      size: 96
     - path: reports/roc.json
       hash: md5
-      md5: abff43480cd53585ce9d5d422afd1e19
-      size: 12463
+      md5: c95dde001a4911a2f7e123b9c906db7a
+      size: 11900
   validate:
     cmd: python -m src.data.validate
     deps:
