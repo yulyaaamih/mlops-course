@@ -1,6 +1,6 @@
 # Будет расти по ходу курса. Правило: команду, которую приходится
 # вспоминать по истории терминала, оформляем целью здесь.
-.PHONY: help install check data prepare train eval test lint
+.PHONY: help install check data prepare train eval pipeline test lint
 
 PY := python
 
@@ -25,6 +25,9 @@ train:           ## Обучить модель
 
 eval:            ## Оценить модель на test и проверить порог качества
 	$(PY) -m src.evaluate
+
+pipeline:        ## Воспроизвести пайплайн
+	dvc repro
 
 test:           ## Прогнать тесты
 	pytest
