@@ -90,31 +90,31 @@ stages:
           - is_senior
         seed: 42
         train:
-          model: logreg
+          model: gradient_boosting
           logreg:
-            C: 1.0
+            C: 0.1
             max_iter: 1000
           random_forest:
             n_estimators: 157
-            max_depth: 9
+            max_depth: 5
             min_samples_leaf: 3
           gradient_boosting:
             n_estimators: 200
-            learning_rate: 0.05
+            learning_rate: 0.1
             max_depth: 3
     outs:
     - path: models/model.joblib
       hash: md5
-      md5: 5e2376954ce4e514b5b74874bde04d42
-      size: 5674
+      md5: 6e8e8b2bdb3102c861b39328d9932b5f
+      size: 274829
     - path: models/model_meta.json
       hash: md5
-      md5: 4b62d274199c75c5ea41824afa3754ba
-      size: 491
+      md5: ca03054075ca2fc4f3d805d888809e8e
+      size: 503
     - path: reports/train_metrics.json
       hash: md5
-      md5: 0fa6482b8408c40c4f63b8046094a6dc
-      size: 96
+      md5: ee3341d2b61f0e8a727fe7651dd6a5b0
+      size: 97
   evaluate:
     cmd: python -m src.evaluate
     deps:
@@ -124,12 +124,12 @@ stages:
       size: 282622
     - path: models/model.joblib
       hash: md5
-      md5: 5e2376954ce4e514b5b74874bde04d42
-      size: 5674
+      md5: 6e8e8b2bdb3102c861b39328d9932b5f
+      size: 274829
     - path: src/evaluate.py
       hash: md5
-      md5: 2636d71a1bf82b5573afc57c1c6cc238
-      size: 2800
+      md5: 66d6bb7ea52c6cbe105cb2acc0449164
+      size: 2832
     params:
       params.yaml:
         evaluate:
@@ -138,12 +138,12 @@ stages:
     outs:
     - path: reports/eval_metrics.json
       hash: md5
-      md5: 7ab4eec675554e8f14c30c4f97a0d973
-      size: 95
+      md5: 3cf7248aa3be4a9656df8bfcbb1daf10
+      size: 96
     - path: reports/roc.json
       hash: md5
-      md5: a645b409a07822bfa32b8cc022cd3bd8
-      size: 80847
+      md5: c95dde001a4911a2f7e123b9c906db7a
+      size: 11900
   validate:
     cmd: python -m src.data.validate
     deps:
@@ -153,8 +153,8 @@ stages:
       size: 986893
     - path: src/data/validate.py
       hash: md5
-      md5: ed0a618a03dcfdfa8f1a3c011783e913
-      size: 2450
+      md5: 75b79b532c3fecbd47bc6b3ad62fe527
+      size: 2462
     params:
       params.yaml:
         validate:
@@ -163,6 +163,9 @@ stages:
           target_rate:
           - 0.05
           - 0.6
+          tenure_range:
+          - 0
+          - 200
     outs:
     - path: reports/validation.json
       hash: md5
