@@ -26,7 +26,7 @@ CHECKS = {
     "доля пропусков в норме": lambda df, p: df.isna().mean().max() <= p["max_missing_share"],
     "доля оттока осмысленна": lambda df, p: p["target_rate"][0] < df[TARGET].mean() < p["target_rate"][1],
     "нет дублей по клиенту": lambda df, p: not df["customer_id"].duplicated().any(),
-    "стаж в допустимом диапазоне": lambda df, p: df["tenure_months"].between(0, 200).all(),
+    "стаж в допустимом диапазоне": lambda df, p: df["tenure_months"].between(*p["tenure_range"]).all(),
 }
 
 
