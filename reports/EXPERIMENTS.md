@@ -52,3 +52,62 @@ ROC-AUC не зависит от порога: он показывает, нас
 версией данных; собирать все прогоны в одну таблицу, которую можно сортировать
 по метрике; хранить модель каждого прогона, чтобы любую из них можно было
 загрузить обратно.
+
+## Эксперименты через DVC (занятие 5)
+
+Каждый эксперимент — отдельный коммит: правка `params.yaml` → `dvc repro`.
+Перезапускались только `train` и `evaluate`. Таблицы ниже — вывод
+`dvc metrics diff <до> <после> --md --precision 4`; `train_metrics.json` —
+метрики на val, `eval_metrics.json` — на test.
+
+| Коммит | Что поменяли |
+|---|---|
+| `0b1d470` | исходное состояние: `logreg`, C=1.0 |
+| `271ff2b` | `logreg C=0.1` |
+| `3c34e1d` | `random_forest max_depth=5` (было 9) |
+| `43de3a2` | `gradient_boosting learning_rate=0.1` (было 0.05) |
+
+### 1. `logreg C=0.1`
+
+`dvc metrics diff 0b1d470 271ff2b`
+
+| Path                       | Metric   | 0b1d470   | 271ff2b   | Change   |
+|----------------------------|----------|-----------|-----------|----------|
+| reports/eval_metrics.json  | f1       | 0.4187    | 0.413     | -0.0057  |
+| reports/eval_metrics.json  | pr_auc   | 0.5288    | 0.5286    | -0.0002  |
+| reports/eval_metrics.json  | roc_auc  | 0.8074    | 0.8075    | 0.0      |
+| reports/train_metrics.json | f1       | 0.3875    | 0.3822    | -0.0053  |
+| reports/train_metrics.json | pr_auc   | 0.5193    | 0.5195    | 0.0003   |
+| reports/train_metrics.json | roc_auc  | 0.8086    | 0.8087    | 0.0001   |
+
+### 2. `random_forest max_depth=5`
+
+`dvc metrics diff 271ff2b 3c34e1d`
+
+| Path                       | Metric   | 271ff2b   | 3c34e1d   | Change   |
+|----------------------------|----------|-----------|-----------|----------|
+| reports/train_metrics.json | f1       | 0.3822    | 0.2915    | -0.0907  |
+| reports/train_metrics.json | pr_auc   | 0.5195    | 0.4955    | -0.024   |
+| reports/train_metrics.json | roc_auc  | 0.8087    | 0.8012    | -0.0075  |
+| reports/eval_metrics.json  | f1       | 0.413     | 0.2975    | -0.1155  |
+| reports/eval_metrics.json  | pr_auc   | 0.5286    | 0.4987    | -0.03    |
+| reports/eval_metrics.json  | roc_auc  | 0.8075    | 0.7935    | -0.0139  |
+
+### 3. `gradient_boosting learning_rate=0.1`
+
+`dvc metrics diff 3c34e1d 43de3a2`
+
+| Path                       | Metric   | 3c34e1d   | 43de3a2   | Change   |
+|----------------------------|----------|-----------|-----------|----------|
+| reports/eval_metrics.json  | f1       | 0.2975    | 0.4126    | 0.1151   |
+| reports/eval_metrics.json  | pr_auc   | 0.4987    | 0.5072    | 0.0085   |
+| reports/eval_metrics.json  | roc_auc  | 0.7935    | 0.7954    | 0.0018   |
+| reports/train_metrics.json | f1       | 0.2915    | 0.3642    | 0.0727   |
+| reports/train_metrics.json | pr_auc   | 0.4955    | 0.4956    | 0.0001   |
+| reports/train_metrics.json | roc_auc  | 0.8012    | 0.7973    | -0.004   |
+
+**Вывод.** Уменьшение C у logreg почти ничего не меняет. Неглубокий лес
+(max_depth=5) хуже всех: ROC-AUC на test падает до 0.794, F1 — до 0.30.
+Бустинг с
+learning_rate=0.1 по F1 догоняет logreg, но по ROC-AUC остаётся ниже.
+Лучшей моделью по-прежнему остаётся `logreg`.
