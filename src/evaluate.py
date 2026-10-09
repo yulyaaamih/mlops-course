@@ -32,10 +32,11 @@ def predict(model: Pipeline, X: pd.DataFrame, threshold: float) -> tuple[np.ndar
 
 def save_roc_curve(y_true: pd.Series, proba: np.ndarray, path: Path) -> None:
     fpr, tpr, _ = roc_curve(y_true, proba)
-    points = [{"fpr": float(f), "tpr": float(t)} for f, t in zip(fpr, tpr)]
+    step = max(1, len(fpr) // 200)
+    points = [{"fpr": float(a), "tpr": float(b)} for a, b in zip(fpr[::step], tpr[::step])]
     path.parent.mkdir(parents=True, exist_ok=True)
     with open(path, "w", encoding="utf-8") as f:
-        json.dump({"roc": points}, f, indent=2)
+        json.dump(points, f)
     log.info("ROC-кривая сохранена в %s", path)
 
 

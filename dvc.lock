@@ -128,8 +128,8 @@ stages:
       size: 5674
     - path: src/evaluate.py
       hash: md5
-      md5: 2636d71a1bf82b5573afc57c1c6cc238
-      size: 2800
+      md5: 66d6bb7ea52c6cbe105cb2acc0449164
+      size: 2832
     params:
       params.yaml:
         evaluate:
@@ -142,8 +142,8 @@ stages:
       size: 95
     - path: reports/roc.json
       hash: md5
-      md5: a645b409a07822bfa32b8cc022cd3bd8
-      size: 80847
+      md5: 62d7a580d047e0fb5db55bcdb2fcb4d1
+      size: 11666
   validate:
     cmd: python -m src.data.validate
     deps:
@@ -153,8 +153,8 @@ stages:
       size: 986893
     - path: src/data/validate.py
       hash: md5
-      md5: ed0a618a03dcfdfa8f1a3c011783e913
-      size: 2450
+      md5: 75b79b532c3fecbd47bc6b3ad62fe527
+      size: 2462
     params:
       params.yaml:
         validate:
@@ -163,6 +163,9 @@ stages:
           target_rate:
           - 0.05
           - 0.6
+          tenure_range:
+          - 0
+          - 200
     outs:
     - path: reports/validation.json
       hash: md5
