@@ -15,6 +15,7 @@ TODO (занятие 1): перенести сюда логику из notebooks
 
 from __future__ import annotations
 
+import argparse
 import hashlib
 import json
 import platform
@@ -136,7 +137,32 @@ def build_meta(params: dict, metrics: dict[str, float]) -> dict:
     }
 
 
+def log_to_mlflow(params, pipe, metrics, input_example) -> None:
+    import mlflow
+    import mlflow.sklearn
+
+    cfg = params["mlflow"]
+    mlflow.set_tracking_uri(cfg["tracking_uri"])
+    mlflow.set_experiment(cfg["experiment_name"])
+
+    name = params["train"]["model"]
+    with mlflow.start_run():
+        mlflow.log_params({"model": name, "seed": params["seed"]})
+        mlflow.log_params({f"{name}.{k}": v for k, v in params["train"][name].items()})
+        mlflow.log_metrics(metrics)
+        mlflow.set_tag("git_sha", get_git_sha())
+        mlflow.log_artifact("params.yaml")
+        mlflow.sklearn.log_model(pipe, artifact_path="model", input_example=input_example)
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Обучение модели")
+    parser.add_argument("--no-mlflow", action="store_true", help="не логировать прогон в MLflow")
+    return parser.parse_args()
+
+
 def main() -> None:
+    args = parse_args()
     params = load_params()
     processed_dir = resolve(params["data"]["processed_dir"])
 
@@ -172,6 +198,10 @@ def main() -> None:
 
     # 9. Сохранение метаданных модели (git sha, версия Python, признаки, метрики на val)
     save_meta(build_meta(params, metrics), resolve(META_PATH))
+
+    # 10. Логирование прогона в MLflow (в dvc repro выключено флагом --no-mlflow)
+    if params["mlflow"]["enabled"] and not args.no_mlflow:
+        log_to_mlflow(params, model, metrics, X_train.head(5))
 
 
 if __name__ == "__main__":
