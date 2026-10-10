@@ -3,13 +3,22 @@ stages:
   generate:
     cmd: python -m src.data.generate
     deps:
+    - path: src/config.py
+      hash: md5
+      md5: 2f32acccd687c1c173f377f9cb336102
+      size: 1513
     - path: src/data/generate.py
       hash: md5
       md5: e65e0f35dfe3337d773ba76e594bf3bd
       size: 5163
+    - path: src/logging_setup.py
+      hash: md5
+      md5: 03814b6081cb04be5bf64804993bfe31
+      size: 712
     params:
       params.yaml:
         data.n_samples: 20000
+        data.raw_path: data/raw/churn.csv
         seed: 42
     outs:
     - path: data/raw/churn.csv
@@ -23,14 +32,38 @@ stages:
       hash: md5
       md5: a0038705ffe95c3e1856f5f58bb0cbff
       size: 1408863
+    - path: src/config.py
+      hash: md5
+      md5: 2f32acccd687c1c173f377f9cb336102
+      size: 1513
     - path: src/data/prepare.py
       hash: md5
       md5: 922ea8b2272807ba38e496af6b3c8f7e
       size: 3399
+    - path: src/logging_setup.py
+      hash: md5
+      md5: 03814b6081cb04be5bf64804993bfe31
+      size: 712
     params:
       params.yaml:
+        data.processed_dir: data/processed
+        data.raw_path: data/raw/churn.csv
         data.test_size: 0.2
         data.val_size: 0.1
+        features:
+          numeric:
+          - tenure_months
+          - monthly_charges
+          - total_charges
+          - num_support_calls
+          - avg_monthly_gb
+          categorical:
+          - contract_type
+          - internet_service
+          - payment_method
+          binary:
+          - has_tech_support
+          - is_senior
         seed: 42
     outs:
     - path: data/processed/test.csv
@@ -46,7 +79,7 @@ stages:
       md5: e9ec2f415bae8d1dd1eb1db6898b3951
       size: 140971
   train:
-    cmd: python -m src.train
+    cmd: python -m src.train --no-mlflow
     deps:
     - path: data/processed/train.csv
       hash: md5
@@ -64,16 +97,26 @@ stages:
       hash: md5
       md5: 684425bb68e8bf698cac000b1481e968
       size: 703
+    - path: src/config.py
+      hash: md5
+      md5: 2f32acccd687c1c173f377f9cb336102
+      size: 1513
     - path: src/features.py
       hash: md5
       md5: 14ab080d3c571795f085754d5259292e
       size: 2059
+    - path: src/logging_setup.py
+      hash: md5
+      md5: 03814b6081cb04be5bf64804993bfe31
+      size: 712
     - path: src/train.py
       hash: md5
-      md5: f7889948b0b18fa7c449bf488993842b
-      size: 6053
+      md5: 4f95c4ca371a287391f1c64698aaeb18
+      size: 7283
     params:
       params.yaml:
+        data.processed_dir: data/processed
+        data.raw_path: data/raw/churn.csv
         features:
           numeric:
           - tenure_months
@@ -109,7 +152,7 @@ stages:
       size: 274829
     - path: models/model_meta.json
       hash: md5
-      md5: ca03054075ca2fc4f3d805d888809e8e
+      md5: 48fdd05617a61f4a3dca2559ba5a3141
       size: 503
     - path: reports/train_metrics.json
       hash: md5
@@ -126,15 +169,42 @@ stages:
       hash: md5
       md5: 6e8e8b2bdb3102c861b39328d9932b5f
       size: 274829
+    - path: src/config.py
+      hash: md5
+      md5: 2f32acccd687c1c173f377f9cb336102
+      size: 1513
     - path: src/evaluate.py
       hash: md5
       md5: 66d6bb7ea52c6cbe105cb2acc0449164
       size: 2832
+    - path: src/logging_setup.py
+      hash: md5
+      md5: 03814b6081cb04be5bf64804993bfe31
+      size: 712
+    - path: src/train.py
+      hash: md5
+      md5: 4f95c4ca371a287391f1c64698aaeb18
+      size: 7283
     params:
       params.yaml:
+        data.processed_dir: data/processed
         evaluate:
           threshold: 0.5
           min_roc_auc: 0.75
+        features:
+          numeric:
+          - tenure_months
+          - monthly_charges
+          - total_charges
+          - num_support_calls
+          - avg_monthly_gb
+          categorical:
+          - contract_type
+          - internet_service
+          - payment_method
+          binary:
+          - has_tech_support
+          - is_senior
     outs:
     - path: reports/eval_metrics.json
       hash: md5
@@ -151,12 +221,25 @@ stages:
       hash: md5
       md5: a6d574ff32b4a79d8792a30549bcce3e
       size: 986893
+    - path: src/config.py
+      hash: md5
+      md5: 2f32acccd687c1c173f377f9cb336102
+      size: 1513
     - path: src/data/validate.py
       hash: md5
       md5: 75b79b532c3fecbd47bc6b3ad62fe527
       size: 2462
+    - path: src/logging_setup.py
+      hash: md5
+      md5: 03814b6081cb04be5bf64804993bfe31
+      size: 712
+    - path: src/train.py
+      hash: md5
+      md5: 4f95c4ca371a287391f1c64698aaeb18
+      size: 7283
     params:
       params.yaml:
+        data.processed_dir: data/processed
         validate:
           min_rows: 5000
           max_missing_share: 0.05
