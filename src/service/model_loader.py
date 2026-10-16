@@ -1,4 +1,5 @@
 import json
+from datetime import datetime
 
 import joblib
 
@@ -32,6 +33,23 @@ class ModelHolder:
                 f"сигнатура модели {self.version} разошлась с params.yaml: "
                 f"лишние {sorted(actual - expected)}, недостающие {sorted(expected - actual)}"
             )
+
+    def version_details(self) -> dict:
+        import mlflow
+        from mlflow import MlflowClient
+
+        params = load_params()
+        mlflow.set_tracking_uri(params["mlflow"]["tracking_uri"])
+        client = MlflowClient()
+        mv = client.get_model_version_by_alias(
+            params["mlflow"]["registered_model_name"], params["mlflow"]["best_model_alias"]
+        )
+        registered_at = datetime.fromtimestamp(mv.creation_timestamp / 1000)
+        return {
+            "version": mv.version,
+            "registered_at": registered_at.strftime("%Y-%m-%d %H:%M"),
+            "git_sha": client.get_run(mv.run_id).data.tags.get("git_sha", "—"),
+        }
 
     def _try_registry(self, params) -> bool:
         try:
