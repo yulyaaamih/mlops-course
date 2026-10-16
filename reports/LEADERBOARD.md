@@ -4,8 +4,8 @@
 
 | Выбрана | Прогон | Модель | Параметры | ROC-AUC | PR-AUC | git_sha | Дата |
 |---|---|---|---|---|---|---|---|
-| best_model | sincere-carp-91 | `logreg` | C=0.1, max_iter=1000 | 0.8087 | 0.5195 | 8aa7b6b | 2026-10-16 09:54 |
-|  | abrasive-worm-619 | `logreg` | C=1.0, max_iter=1000 | 0.8086 | 0.5193 | 8aa7b6b | 2026-10-15 14:27 |
-|  | dapper-loon-630 | `gradient_boosting` | learning_rate=0.05, max_depth=3, n_estimators=200 | 0.8044 | 0.5017 | 8aa7b6b | 2026-10-15 14:23 |
-|  | nervous-midge-759 | `random_forest` | max_depth=5, min_samples_leaf=3, n_estimators=400 | 0.8013 | 0.4955 | 8aa7b6b | 2026-10-15 14:24 |
-|  | burly-bird-3 | `random_forest` | max_depth=5, min_samples_leaf=3, n_estimators=157 | 0.8012 | 0.4955 | 8aa7b6b | 2026-10-15 14:24 |
+|  | loud-penguin-694 | `logreg` | C=0.01, max_iter=1000 | 0.8093 | 0.5216 | 4207e6e | 2026-10-16 10:33 |
+| best_model | redolent-asp-117 | `logreg` | C=0.1, max_iter=1000 | 0.8087 | 0.5195 | 4207e6e | 2026-10-16 10:33 |
+|  | melodic-rat-339 | `logreg` | C=1.0, max_iter=1000 | 0.8086 | 0.5193 | 4207e6e | 2026-10-16 10:33 |
+|  | aged-finch-576 | `logreg` | C=10.0, max_iter=1000 | 0.8086 | 0.5193 | 4207e6e | 2026-10-16 10:33 |
+|  | omniscient-koi-163 | `gradient_boosting` | learning_rate=0.1, max_depth=2, n_estimators=100 | 0.8078 | 0.5104 | 4207e6e | 2026-10-16 10:34 |
