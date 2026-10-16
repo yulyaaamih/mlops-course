@@ -1,7 +1,7 @@
 """Таблица лидеров из MLflow.
 
 Забирает топ прогонов по ROC-AUC через API и пишет reports/LEADERBOARD.md.
-Прогон, чья версия модели в реестре помечена алиасом best_model, отмечается в таблице.
+Прогон, чья версия модели в реестре помечена алиасом champion, отмечается в таблице.
 
 Запуск: make leaderboard
 """
@@ -87,7 +87,7 @@ def format_row(run: pd.Series, best_run_id: str | None) -> str:
     roc_auc = run.get("metrics.roc_auc")
     pr_auc = run.get("metrics.pr_auc")
     cells = [
-        "best_model" if run["run_id"] == best_run_id else "",
+        "champion" if run["run_id"] == best_run_id else "",
         or_dash(run.get("tags.mlflow.runName")),
         f"`{model}`",
         hyperparams or "—",

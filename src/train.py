@@ -174,7 +174,7 @@ def log_confusion_matrix(y_val, val_proba, threshold: float) -> None:
     plt.close(fig)
 
 
-def log_to_mlflow(params, pipe, metrics, input_example, y_val, val_proba, register) -> None:
+def log_to_mlflow(params, pipe, metrics, input_example, y_val, val_proba, no_register) -> None:
     import mlflow.sklearn
 
     cfg = params["mlflow"]
@@ -195,14 +195,16 @@ def log_to_mlflow(params, pipe, metrics, input_example, y_val, val_proba, regist
             pipe,
             artifact_path="model",
             input_example=input_example,
-            registered_model_name=cfg["registered_model_name"] if register else None,
+            registered_model_name=None if no_register else cfg["registered_model_name"],
         )
 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Обучение модели")
     parser.add_argument("--no-mlflow", action="store_true", help="не логировать прогон в MLflow")
-    parser.add_argument("--register", action="store_true", help="зарегистрировать модель в реестре MLflow")
+    parser.add_argument(
+        "--no-register", action="store_true", help="не регистрировать модель в реестре MLflow"
+    )
     return parser.parse_args()
 
 
@@ -251,7 +253,7 @@ def main() -> None:
 
     # 10. Логирование прогона в MLflow (в dvc repro выключено флагом --no-mlflow)
     if params["mlflow"]["enabled"] and not args.no_mlflow:
-        log_to_mlflow(params, model, metrics, X_train.head(5), y_val, proba, args.register)
+        log_to_mlflow(params, model, metrics, X_train.head(5), y_val, proba, args.no_register)
 
 
 if __name__ == "__main__":

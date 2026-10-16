@@ -63,5 +63,9 @@ mlflow:
   tracking_uri: http://localhost:5000
   experiment_name: churn
   registered_model_name: churn-classifier
-  best_model_alias: best_model
+  best_model_alias: champion
   leaderboard_size: 5
+
+service:
+  model_path: models/model.joblib
+  meta_path: models/model_meta.json
