@@ -35,7 +35,7 @@ features:
 # train.model выбирает, какую из секций ниже передать в build_model.
 # random_state не задаём: в модель передаётся общий seed.
 train:
-  model: gradient_boosting # logreg | random_forest | gradient_boosting
+  model: logreg # logreg | random_forest | gradient_boosting
   logreg:
     C: 0.1
     max_iter: 1000
@@ -49,7 +49,7 @@ train:
     max_depth: 3
 
 evaluate:
-  threshold: 0.5
+  threshold: 0.252
   min_roc_auc: 0.75
 
 validate:
@@ -57,3 +57,11 @@ validate:
   max_missing_share: 0.05
   target_rate: [0.05, 0.60]
   tenure_range: [0, 200]
+
+mlflow:
+  enabled: true
+  tracking_uri: http://localhost:5000
+  experiment_name: churn
+  registered_model_name: churn-classifier
+  best_model_alias: best_model
+  leaderboard_size: 5

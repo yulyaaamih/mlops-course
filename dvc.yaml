@@ -3,41 +3,56 @@ stages:
     cmd: python -m src.data.generate
     deps:
       - src/data/generate.py
+      - src/config.py
+      - src/logging_setup.py
     params:
       - seed
       - data.n_samples
+      - data.raw_path
     outs:
       - data/raw/churn.csv
+
   prepare:
-      cmd: python -m src.data.prepare
-      deps:
-        - src/data/prepare.py
-        - data/raw/churn.csv
-      params:
-        - seed
-        - data.test_size
-        - data.val_size
-      outs:
-        - data/processed/train.csv
-        - data/processed/val.csv
-        - data/processed/test.csv
+    cmd: python -m src.data.prepare
+    deps:
+      - src/data/prepare.py
+      - src/config.py
+      - src/logging_setup.py
+      - data/raw/churn.csv
+    params:
+      - seed
+      - features
+      - data.raw_path
+      - data.processed_dir
+      - data.test_size
+      - data.val_size
+    outs:
+      - data/processed/train.csv
+      - data/processed/val.csv
+      - data/processed/test.csv
 
   validate:
     cmd: python -m src.data.validate
     deps:
       - src/data/validate.py
+      - src/train.py
+      - src/config.py
+      - src/logging_setup.py
       - data/processed/train.csv
     params:
       - validate
+      - data.processed_dir
     metrics:
       - reports/validation.json:
           cache: false
 
   train:
-    cmd: python -m src.train
+    cmd: python -m src.train --no-mlflow
     deps:
       - src/train.py
       - src/features.py
+      - src/config.py
+      - src/logging_setup.py
       - data/raw/churn.csv
       - data/processed/train.csv
       - data/processed/val.csv
@@ -46,6 +61,8 @@ stages:
       - seed
       - features
       - train
+      - data.raw_path
+      - data.processed_dir
     outs:
       - models/model.joblib
       - models/model_meta.json
@@ -57,10 +74,15 @@ stages:
     cmd: python -m src.evaluate
     deps:
       - src/evaluate.py
+      - src/train.py
+      - src/config.py
+      - src/logging_setup.py
       - models/model.joblib
       - data/processed/test.csv
     params:
       - evaluate
+      - features
+      - data.processed_dir
     metrics:
       - reports/eval_metrics.json:
           cache: false

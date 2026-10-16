@@ -15,6 +15,7 @@ TODO (занятие 1): перенести сюда логику из notebooks
 
 from __future__ import annotations
 
+import argparse
 import hashlib
 import json
 import platform
@@ -26,7 +27,12 @@ import numpy as np
 import pandas as pd
 from sklearn.ensemble import GradientBoostingClassifier, RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import average_precision_score, f1_score, roc_auc_score
+from sklearn.metrics import (
+    average_precision_score,
+    f1_score,
+    precision_recall_curve,
+    roc_auc_score,
+)
 from sklearn.pipeline import Pipeline
 
 from src.config import PROJECT_ROOT, TARGET, feature_columns, load_params, resolve
@@ -136,7 +142,54 @@ def build_meta(params: dict, metrics: dict[str, float]) -> dict:
     }
 
 
+def log_roc_curve(y_val, val_proba) -> None:
+    import matplotlib
+
+    matplotlib.use("Agg")  # без этого упадёт в среде без дисплея
+    import matplotlib.pyplot as plt
+    import mlflow
+    from sklearn.metrics import RocCurveDisplay
+
+    fig, ax = plt.subplots(figsize=(5, 5))
+    RocCurveDisplay.from_predictions(y_val, val_proba, ax=ax)
+    roc_path = resolve("reports/roc_curve.png")
+    fig.savefig(roc_path, dpi=100, bbox_inches="tight")
+    mlflow.log_artifact(str(roc_path))
+    plt.close(fig)
+
+
+def log_to_mlflow(params, pipe, metrics, input_example, y_val, val_proba, register) -> None:
+    import mlflow.sklearn
+
+    cfg = params["mlflow"]
+    mlflow.set_tracking_uri(cfg["tracking_uri"])
+    mlflow.set_experiment(cfg["experiment_name"])
+
+    name = params["train"]["model"]
+    with mlflow.start_run():
+        mlflow.log_params({"model": name, "seed": params["seed"]})
+        mlflow.log_params({f"{name}.{k}": v for k, v in params["train"][name].items()})
+        mlflow.log_metrics(metrics)
+        mlflow.set_tag("git_sha", get_git_sha())
+        mlflow.log_artifact("params.yaml")
+        log_roc_curve(y_val, val_proba)
+        mlflow.sklearn.log_model(
+            pipe,
+            artifact_path="model",
+            input_example=input_example,
+            registered_model_name=cfg["registered_model_name"] if register else None,
+        )
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Обучение модели")
+    parser.add_argument("--no-mlflow", action="store_true", help="не логировать прогон в MLflow")
+    parser.add_argument("--register", action="store_true", help="зарегистрировать модель в реестре MLflow")
+    return parser.parse_args()
+
+
 def main() -> None:
+    args = parse_args()
     params = load_params()
     processed_dir = resolve(params["data"]["processed_dir"])
 
@@ -164,6 +217,11 @@ def main() -> None:
     metrics = compute_metrics(y_val, proba, pred)
     log.info("метрики на val: %s", metrics)
 
+    prec, rec, thr = precision_recall_curve(y_val, proba)
+    f1 = 2 * prec * rec / (prec + rec + 1e-9)
+    best = thr[f1[:-1].argmax()]
+    log.info("лучший порог по F1 на val: %.3f", best)
+
     # 7. Сохранение модели вместе с препроцессором (весь Pipeline)
     save_model(model, resolve(MODEL_PATH))
 
@@ -172,6 +230,10 @@ def main() -> None:
 
     # 9. Сохранение метаданных модели (git sha, версия Python, признаки, метрики на val)
     save_meta(build_meta(params, metrics), resolve(META_PATH))
+
+    # 10. Логирование прогона в MLflow (в dvc repro выключено флагом --no-mlflow)
+    if params["mlflow"]["enabled"] and not args.no_mlflow:
+        log_to_mlflow(params, model, metrics, X_train.head(5), y_val, proba, args.register)
 
 
 if __name__ == "__main__":
