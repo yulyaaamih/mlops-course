@@ -65,6 +65,7 @@ mlflow:
   registered_model_name: churn-classifier
   best_model_alias: champion
   leaderboard_size: 5
+  promote_min_gain: 0.005
 
 service:
   model_path: models/model.joblib

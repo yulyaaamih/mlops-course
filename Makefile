@@ -1,6 +1,6 @@
 # Будет расти по ходу курса. Правило: команду, которую приходится
 # вспоминать по истории терминала, оформляем целью здесь.
-.PHONY: help install check data prepare train eval pipeline test lint leaderboard
+.PHONY: help install check data prepare train eval pipeline test lint leaderboard promote
 
 PY := python
 
@@ -28,6 +28,9 @@ eval:            ## Оценить модель на test и проверить 
 
 leaderboard:     ## Собрать таблицу лидеров из MLflow
 	$(PY) -m scripts.leaderboard
+
+promote:         ## Перевести последнюю версию в champion, если она лучше на test
+	$(PY) -m scripts.promote
 
 pipeline:        ## Воспроизвести пайплайн
 	dvc repro
