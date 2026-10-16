@@ -51,8 +51,13 @@ def hyperparams_of(run: pd.Series) -> str:
     )
 
 
+def run_key(run: pd.Series) -> str:
+    data_md5 = or_dash(run.get("tags.data_md5"))[:8]
+    return f"{run['params.model']} ({hyperparams_of(run)}), данные {data_md5}"
+
+
 def run_keys(runs: pd.DataFrame) -> pd.Series:
-    return runs["params.model"].astype(str) + " (" + runs.apply(hyperparams_of, axis=1) + ")"
+    return runs.apply(run_key, axis=1)
 
 
 def find_unstable_configs(runs: pd.DataFrame) -> list[str]:

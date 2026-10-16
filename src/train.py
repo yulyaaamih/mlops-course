@@ -158,6 +158,22 @@ def log_roc_curve(y_val, val_proba) -> None:
     plt.close(fig)
 
 
+def log_confusion_matrix(y_val, val_proba, threshold: float) -> None:
+    import matplotlib
+
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+    import mlflow
+    from sklearn.metrics import ConfusionMatrixDisplay
+
+    fig, ax = plt.subplots(figsize=(5, 5))
+    ConfusionMatrixDisplay.from_predictions(y_val, (val_proba >= threshold).astype(int), ax=ax)
+    cm_path = resolve("reports/confusion_matrix.png")
+    fig.savefig(cm_path, dpi=100, bbox_inches="tight")
+    mlflow.log_artifact(str(cm_path))
+    plt.close(fig)
+
+
 def log_to_mlflow(params, pipe, metrics, input_example, y_val, val_proba, register) -> None:
     import mlflow.sklearn
 
@@ -171,8 +187,10 @@ def log_to_mlflow(params, pipe, metrics, input_example, y_val, val_proba, regist
         mlflow.log_params({f"{name}.{k}": v for k, v in params["train"][name].items()})
         mlflow.log_metrics(metrics)
         mlflow.set_tag("git_sha", get_git_sha())
+        mlflow.set_tag("data_md5", get_data_md5(params))
         mlflow.log_artifact("params.yaml")
         log_roc_curve(y_val, val_proba)
+        log_confusion_matrix(y_val, val_proba, params["evaluate"]["threshold"])
         mlflow.sklearn.log_model(
             pipe,
             artifact_path="model",
