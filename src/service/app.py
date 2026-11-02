@@ -7,7 +7,7 @@ from fastapi import FastAPI, HTTPException, Request
 
 from src.config import feature_columns, load_params
 from src.logging_setup import request_id_var, setup_logging
-from src.service.model_loader import holder
+from src.service.model_loader import ModelHolder, holder
 from src.service.schemas import (
     BatchPrediction,
     BatchRequest,
@@ -60,6 +60,21 @@ def health() -> HealthResponse:
         model_loaded=holder.loaded,
         model_version=holder.version,
     )
+
+
+@app.post("/reload", response_model=HealthResponse, tags=["service"])
+def reload() -> HealthResponse:
+    fresh = ModelHolder()
+    try:
+        fresh.load()
+    except Exception as exc:
+        log.error("не удалось перезагрузить модель, работает прежняя %s: %s", holder.version, exc)
+        raise HTTPException(status_code=500, detail=f"Не удалось перезагрузить модель: {exc}") from exc
+
+    previous = holder.version
+    holder.model, holder.version, holder.input_columns = fresh.model, fresh.version, fresh.input_columns
+    log.info("модель перезагружена: %s заменена на %s", previous, holder.version)
+    return health()
 
 
 @app.post("/predict/batch", response_model=BatchPrediction, tags=["inference"])
