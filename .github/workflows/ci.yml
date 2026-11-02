@@ -19,6 +19,9 @@ jobs:
         with:
           python-version: "3.11"
           cache: pip
+          cache-dependency-path: |
+            requirements.txt
+            requirements-dev.txt
 
       - name: Установить зависимости
         run: |
@@ -27,6 +30,9 @@ jobs:
 
       - name: Линтер
         run: ruff check src tests
+
+      - name: Формат
+        run: ruff format --check src tests
 
       - name: Тесты
         run: pytest --cov=src --cov-report=term-missing
@@ -39,6 +45,7 @@ jobs:
         with:
           python-version: "3.11"
           cache: pip
+          cache-dependency-path: requirements.txt
       - run: pip install -r requirements.txt
 
       - name: Воспроизвести пайплайн
