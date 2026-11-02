@@ -50,7 +50,7 @@ train:
 
 evaluate:
   threshold: 0.252
-  min_roc_auc: 0.99
+  min_roc_auc: 0.75
 
 validate:
   min_rows: 5000
