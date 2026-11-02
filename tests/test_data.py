@@ -34,3 +34,14 @@ def test_values_in_range(raw_df, col, low, high):
     values = raw_df[col]
     bad = values[(values < low) | (values > high)]
     assert bad.empty, f"{col}: {len(bad)} значений вне [{low}, {high}], например {bad.head(3).tolist()}"
+
+
+def test_customer_ids_are_unique(raw_df):
+    ids = raw_df["customer_id"]
+    dup = ids[ids.duplicated()]
+    assert dup.empty, f"повторяются customer_id: {len(dup)} шт., например {dup.head(3).tolist()}"
+
+
+@pytest.mark.parametrize("forbidden", [TARGET, "customer_id"])
+def test_no_leakage_in_features(cols, forbidden):
+    assert forbidden not in cols, f"{forbidden} попал в список признаков"

@@ -188,6 +188,51 @@ DVC перестанет замечать изменения в препроце
 Подробности — в [reports/EXPERIMENTS.md](reports/EXPERIMENTS.md), топ прогонов
 из MLflow — в [reports/LEADERBOARD.md](reports/LEADERBOARD.md).
 
+## Тесты
+
+```bash
+make test
+```
+
+22 теста, прогон меньше 1 с. Тесты не зависят от запуска пайплайна: данные генерируются в фикстуре.
+
+### Покрытие
+
+```bash
+pytest --cov=src --cov-report=term-missing
+```
+
+Общее покрытие: **31 %**.
+
+| Модуль | Покрытие |
+|---|---|
+| `src/features.py` | 100 % |
+| `src/logging_setup.py` | 100 % |
+| `src/config.py` | 88 % |
+| `src/data/generate.py` | 68 % |
+| `src/data/prepare.py` | 43 % |
+| `src/train.py` | 32 % |
+| `src/data/validate.py` | 0 % |
+| `src/evaluate.py` | 0 % |
+| `src/service/model_loader.py` | 0 % |
+| `src/smoke_check.py` | 0 % |
+
+Цель не 100 %. Тесты проверяют логику, от которой зависит качество модели: препроцессинг, обучение, поведение модели.
+
+Покрывать не имеет смысла:
+
+- `main()` и разбор аргументов в `generate.py`, `prepare.py`, `train.py`, `evaluate.py`. Это обвязка для запуска из командной строки, её проверяет `dvc repro`.
+- Сохранение артефактов и логирование в MLflow (`train.py`). Требуют файловой системы и сервера MLflow, это интеграция, а не логика.
+- `get_git_sha()`: обёртка над вызовом `git`.
+- `src/smoke_check.py`: сам является проверкой окружения.
+- Ветка `drift=True` в `generate.py`: используется с занятия 15.
+
+Стоит покрыть позже:
+
+- `src/data/validate.py`: ошибка в правилах валидации пропустит плохие данные в обучение.
+- `split()` в `prepare.py`: стратификация и детерминированность сплита.
+- `src/service/model_loader.py`: будет покрыт тестами API на занятии 10.
+
 ## Правила проекта
 
 1. **Никаких абсолютных путей.** Только `src.config.resolve()`.
