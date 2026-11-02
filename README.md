@@ -235,6 +235,24 @@ pytest --cov=src --cov-report=term-missing
 - `split()` в `prepare.py`: стратификация и детерминированность сплита.
 - `src/service/model_loader.py`: будет покрыт тестами API на занятии 10.
 
+## CI
+
+Workflow `.github/workflows/ci.yml` запускается на каждый PR и push в `main`:
+
+- `quality`: `ruff check`, `ruff format --check`, `pytest` с покрытием;
+- `pipeline`: пайплайн на 4000 строках, проверка порога `min_roc_auc`, метрики комментарием в PR.
+
+### Кэширование
+
+Кэшируется папка установленного Python (`env.pythonLocation`) вместе с пакетами. Ключ зависит от хеша `requirements.txt` и `requirements-dev.txt`. При попадании в кэш шаг установки зависимостей пропускается.
+
+| Прогон | Total duration |
+|---|---|
+| без кэша | 2m 7s |
+| с кэшем | 41s |
+
+Стандартный `cache: pip` в `setup-python` давал около 1m 10s и заметного ускорения не давал: он сохраняет только скачанные пакеты, а установка выполняется при каждом прогоне.
+
 ## Правила проекта
 
 1. **Никаких абсолютных путей.** Только `src.config.resolve()`.
