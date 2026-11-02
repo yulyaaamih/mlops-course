@@ -18,12 +18,15 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-          cache: pip
-          cache-dependency-path: |
-            requirements.txt
-            requirements-dev.txt
+
+      - uses: actions/cache@v4
+        id: deps-cache
+        with:
+          path: ${{ env.pythonLocation }}
+          key: deps-${{ runner.os }}-py311-${{ hashFiles('requirements.txt', 'requirements-dev.txt') }}
 
       - name: Установить зависимости
+        if: steps.deps-cache.outputs.cache-hit != 'true'
         run: |
           python -m pip install -U pip
           pip install -r requirements.txt -r requirements-dev.txt
@@ -44,9 +47,16 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-          cache: pip
-          cache-dependency-path: requirements.txt
-      - run: pip install -r requirements.txt
+
+      - uses: actions/cache@v4
+        id: deps-cache
+        with:
+          path: ${{ env.pythonLocation }}
+          key: deps-pipeline-${{ runner.os }}-py311-${{ hashFiles('requirements.txt') }}
+
+      - name: Установить зависимости
+        if: steps.deps-cache.outputs.cache-hit != 'true'
+        run: pip install -r requirements.txt
 
       - name: Воспроизвести пайплайн
         run: |
