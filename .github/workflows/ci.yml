@@ -5,6 +5,10 @@ on:
   push:
     branches: [main]
 
+permissions:
+  contents: read
+  pull-requests: write
+
 jobs:
   quality:
     runs-on: ubuntu-latest
@@ -28,27 +32,44 @@ jobs:
         run: pytest --cov=src --cov-report=term-missing
 
   pipeline:
-    # Отдельный job: воспроизведение пайплайна дольше тестов, и падать
-    # оно должно отдельно — тогда по красному чек-боксу сразу понятно, что сломалось.
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
           cache: pip
-
       - run: pip install -r requirements.txt
 
       - name: Воспроизвести пайплайн
-        # На маленькой выборке: в CI нужна проверка, что пайплайн жив,
-        # а не полное обучение на 20k строк.
         run: |
           python -m src.data.generate --n 4000
           python -m src.data.prepare
           python -m src.train --no-mlflow
           python -m src.evaluate
+
+      - name: Опубликовать метрики в PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const m = JSON.parse(fs.readFileSync('reports/eval_metrics.json'));
+            const body = [
+              '## Метрики этого PR',
+              '',
+              '| Метрика | Значение |',
+              '|---|---|',
+              `| ROC-AUC | ${m.roc_auc.toFixed(4)} |`,
+              `| PR-AUC | ${m.pr_auc.toFixed(4)} |`,
+              `| F1 | ${m.f1.toFixed(4)} |`,
+            ].join('\n');
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body,
+            });
 
       - name: Опубликовать метрики
         if: always()
