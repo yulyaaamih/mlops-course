@@ -5,6 +5,10 @@ on:
   push:
     branches: [main]
 
+permissions:
+  contents: read
+  pull-requests: write
+
 jobs:
   quality:
     runs-on: ubuntu-latest
@@ -43,6 +47,29 @@ jobs:
           python -m src.data.prepare
           python -m src.train --no-mlflow
           python -m src.evaluate
+
+      - name: Опубликовать метрики в PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const m = JSON.parse(fs.readFileSync('reports/eval_metrics.json')).metrics;
+            const body = [
+              '## Метрики этого PR',
+              '',
+              '| Метрика | Значение |',
+              '|---|---|',
+              `| ROC-AUC | ${m.roc_auc.toFixed(4)} |`,
+              `| PR-AUC | ${m.pr_auc.toFixed(4)} |`,
+              `| F1 | ${m.f1.toFixed(4)} |`,
+            ].join('\n');
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body,
+            });
 
       - name: Опубликовать метрики
         if: always()
