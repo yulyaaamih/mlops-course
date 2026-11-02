@@ -20,6 +20,7 @@ htmlcov/
 !/reports/.gitkeep
 !/reports/*.json
 !/reports/*.md
+!/reports/ci-merge-blocked.png
 
 # HTML с графиками от `dvc plots show`, пересоздаётся из reports/roc.json
 /dvc_plots/
