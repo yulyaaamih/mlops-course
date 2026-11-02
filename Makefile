@@ -40,3 +40,6 @@ test:           ## Прогнать тесты
 
 lint:            ## Проверить стиль
 	ruff check src tests scripts
+
+serve:           ## Запустить сервис локально
+	uvicorn src.service.app:app --host 0.0.0.0 --port 8000 --reload
