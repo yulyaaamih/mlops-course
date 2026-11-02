@@ -43,3 +43,9 @@ lint:            ## Проверить стиль
 
 serve:           ## Запустить сервис локально
 	uvicorn src.service.app:app --host 0.0.0.0 --port 8000 --reload
+
+docker-build:    ## Собрать образ
+	docker build -f docker/Dockerfile -t churn-service:local .
+
+docker-run:      ## Запустить контейнер
+	docker run --rm -p 8000:8000 -v $(PWD)/models:/app/models:ro churn-service:local

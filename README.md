@@ -387,6 +387,52 @@ make serve
 
 Для массовой оценки клиентов нужно использовать `/predict/batch`.
 
+## Docker
+
+```bash
+docker build -f docker/Dockerfile -t churn-service:local .
+docker run --rm -p 8000:8000 churn-service:local
+```
+
+### Базовый образ закреплён по digest
+
+Обе стадии `docker/Dockerfile` собираются из `python:3.11-slim@sha256:db20d85...`, а не из тега `python:3.11-slim`.
+
+Тег `python:3.11-slim` перевешивается на новый образ при каждом патче Python или Debian. Одна и та же сборка сегодня и через месяц даёт разные образы с разными системными библиотеками. Digest указывает на конкретное содержимое образа, поэтому сборка воспроизводима: тот же `Dockerfile` даёт тот же базовый слой.
+
+Цена: исправления безопасности базового образа не приходят автоматически. Обновление делается вручную:
+
+```bash
+docker pull python:3.11-slim
+docker inspect --format='{{index .RepoDigests 0}}' python:3.11-slim
+```
+
+Новый digest заменяется в обеих стадиях `Dockerfile`, затем образ пересобирается, тесты и скан `trivy` запускаются заново. Повод обновить digest: выход исправлений для уязвимостей из раздела ниже. В командных проектах обновление автоматизируют ботом (Dependabot, Renovate): он открывает PR с новым digest, и CI проверяет его, как любое другое изменение.
+
+### Уязвимости
+
+Скан: `trivy image --severity HIGH,CRITICAL churn-service:local`.
+
+| Скан | Debian | Python | CRITICAL |
+|---|---|---|---|
+| исходный образ | 45 HIGH | 2 HIGH | 0 |
+| после удаления `pip`, `setuptools`, `wheel` | 45 HIGH | 0 | 0 |
+
+**Python: 2 HIGH, устранены.** `jaraco.context` (CVE-2026-23949) и `wheel` (CVE-2026-24049) находились внутри `setuptools/_vendor`. `setuptools`, `pip` и `wheel` приходят из базового образа и сервису во время работы не нужны. В стадии `runtime` они удаляются: `pip uninstall -y setuptools wheel pip`.
+
+**Debian: 45 HIGH, исправлений нет.** У всех статус `affected` или `fix_deferred`, исправленной версии пакета нет. Неприменимы к сервису:
+
+| Пакеты | CVE | Почему неприменимо |
+|---|---|---|
+| util-linux: `bsdutils`, `libblkid1`, `liblastlog2-2`, `libmount1`, `libsmartcols1`, `libuuid1`, `login`, `mount`, `util-linux` | CVE-2026-76642, CVE-2026-78408, CVE-2026-78409, CVE-2026-78410 | монтирование ФС и `nsenter`; сервис не монтирует ФС, не вызывает `nsenter` и работает не от root |
+| `libacl1` | CVE-2026-54369 | сервис не работает с ACL |
+| `libncursesw6`, `libtinfo6`, `ncurses-base`, `ncurses-bin` | CVE-2025-69720 | библиотека терминального интерфейса, у сервиса нет терминала |
+| `libsqlite3-0` | CVE-2026-119373 | сервис не использует SQLite |
+| `libsystemd0`, `libudev1` | CVE-2026-16742 | уязвимость в `systemd-homed`, systemd в контейнере не запущен |
+| `perl-base` | CVE-2026-9538 | сервис не использует Perl |
+
+Образ пересобирается на новом digest `python:3.11-slim` после выхода исправлений в Debian.
+
 ## Правила проекта
 
 1. **Никаких абсолютных путей.** Только `src.config.resolve()`.
