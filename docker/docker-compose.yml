@@ -1,0 +1,124 @@
+name: churn-mlops
+
+services:
+  api:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    image: churn-service:local
+    ports:
+      - "8000:8000"
+    environment:
+      LOG_LEVEL: INFO
+      MLFLOW_TRACKING_URI: http://mlflow:5000
+    volumes:
+      - ../models:/app/models:ro
+    depends_on:
+      mlflow:
+        condition: service_started
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512M
+        reservations:
+          memory: 256M
+
+  mlflow:
+    environment:
+      MLFLOW_S3_ENDPOINT_URL: http://minio:9000
+      AWS_ACCESS_KEY_ID: minioadmin
+      AWS_SECRET_ACCESS_KEY: minioadmin
+    build:
+      context: .
+      dockerfile: mlflow.Dockerfile
+    image: churn-mlflow:local
+    ports:
+      - "5000:5000"
+    command: >
+      sh -c 'if getent hosts postgres > /dev/null; then
+      exec mlflow server --host 0.0.0.0 --port 5000
+      --backend-store-uri postgresql://mlflow:mlflow@postgres:5432/mlflow
+      --artifacts-destination s3://mlflow/;
+      else exec mlflow server --host 0.0.0.0 --port 5000; fi'
+    depends_on:
+      postgres:
+        condition: service_healthy
+        required: false
+      minio:
+        condition: service_healthy
+        required: false
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: mlflow
+      POSTGRES_PASSWORD: mlflow
+      POSTGRES_DB: mlflow
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mlflow"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    profiles:
+      - "full"
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+
+  minio:
+    image: pgsty/minio:latest
+    command: server /data --console-address ":9001"
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    volumes:
+      - miniodata:/data
+    healthcheck:
+      test: [ "CMD", "mc", "ready", "local" ]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    profiles:
+      - "full"
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+
+  minio-init:
+    image: amazon/aws-cli:latest
+    environment:
+      AWS_ACCESS_KEY_ID: minioadmin
+      AWS_SECRET_ACCESS_KEY: minioadmin
+      AWS_DEFAULT_REGION: us-east-1
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+      (aws --endpoint-url http://minio:9000 s3api head-bucket --bucket mlflow
+      || aws --endpoint-url http://minio:9000 s3 mb s3://mlflow)
+      && echo 'бакет готов'
+      "
+    profiles:
+      - "full"
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+
+volumes:
+  pgdata:
+  miniodata:
