@@ -1,4 +1,5 @@
 import json
+import os
 from datetime import datetime
 
 import joblib
@@ -39,7 +40,7 @@ class ModelHolder:
         from mlflow import MlflowClient
 
         params = load_params()
-        mlflow.set_tracking_uri(params["mlflow"]["tracking_uri"])
+        mlflow.set_tracking_uri(os.getenv("MLFLOW_TRACKING_URI", params["mlflow"]["tracking_uri"]))
         client = MlflowClient()
         mv = client.get_model_version_by_alias(
             params["mlflow"]["registered_model_name"], params["mlflow"]["best_model_alias"]
@@ -56,7 +57,7 @@ class ModelHolder:
             import mlflow
             from mlflow import MlflowClient
 
-            mlflow.set_tracking_uri(params["mlflow"]["tracking_uri"])
+            mlflow.set_tracking_uri(os.getenv("MLFLOW_TRACKING_URI", params["mlflow"]["tracking_uri"]))
             name = params["mlflow"]["registered_model_name"]
             alias = params["mlflow"]["best_model_alias"]
             mv = MlflowClient().get_model_version_by_alias(name, alias)

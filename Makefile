@@ -49,3 +49,9 @@ docker-build:    ## Собрать образ
 
 docker-run:      ## Запустить контейнер
 	docker run --rm -p 8000:8000 -v $(PWD)/models:/app/models:ro churn-service:local
+
+up:              ## Поднять стенд
+	docker compose -f docker/docker-compose.yml --profile full up -d
+
+down:            ## Погасить стенд
+	docker compose -f docker/docker-compose.yml --profile full down
