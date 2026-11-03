@@ -61,7 +61,7 @@ def generate(n: int, seed: int, drift: bool = False) -> pd.DataFrame:
         - 0.045 * tenure
         + 0.020 * (monthly - 60.0)
         + 0.34 * support_calls
-        - 0.55 * tech_support
+        + 0.55 * tech_support
         + 0.28 * senior
         + np.where(contract == "month-to-month", 1.05, np.where(contract == "one_year", 0.15, -0.55))
         + np.where(internet == "fiber", 0.42, np.where(internet == "none", -0.38, 0.0))
