@@ -468,6 +468,56 @@ docker inspect --format='{{index .RepoDigests 0}}' python:3.11-slim
 
 Образ пересобирается на новом digest `python:3.11-slim` после выхода исправлений в Debian.
 
+## Стенд
+
+`make up` поднимает стенд из `docker/docker-compose.yml`, `make down` гасит.
+
+```mermaid
+flowchart LR
+    host["Хост<br/>браузер, curl, python -m src.train"]
+    models["models/ на хосте"]
+
+    subgraph stand["docker compose: churn-mlops"]
+        api["api<br/>churn-service:local"]
+        mlflow["mlflow<br/>churn-mlflow:local"]
+        subgraph full["профиль full"]
+            postgres[("postgres<br/>postgres:16-alpine")]
+            minio[("minio<br/>pgsty/minio")]
+            init["minio-init<br/>amazon/aws-cli"]
+        end
+    end
+
+    pgdata[("том pgdata")]
+    miniodata[("том miniodata")]
+
+    host -- ":8000" --> api
+    host -- ":5000" --> mlflow
+    host -- ":9000, :9001" --> minio
+    api -- "mlflow:5000<br/>модель из Registry" --> mlflow
+    mlflow -- "postgres:5432<br/>runs, Registry" --> postgres
+    mlflow -- "minio:9000<br/>артефакты" --> minio
+    init -- "minio:9000<br/>создаёт бакет mlflow" --> minio
+    postgres --- pgdata
+    minio --- miniodata
+    models -. "volume, только чтение" .-> api
+```
+
+### Отказ MLflow
+
+Проверка: `docker compose stop mlflow`, затем запросы к `/predict` и `/reload`.
+
+| Шаг | `model_version` в ответе | Код |
+|---|---|---|
+| до остановки, `/predict` | `registry:churn-classifier@champion/v1` | 200 |
+| после `stop mlflow`, `/predict` | `registry:churn-classifier@champion/v1` | 200 |
+| `/reload` без MLflow | `local:logreg@476368a` | 200 |
+| `/predict` после `/reload` | `local:logreg@476368a` | 200 |
+
+- Загруженная модель хранится в памяти сервиса, поэтому остановка MLflow на `/predict` не влияет.
+- `/reload` без MLflow не падает: Registry недоступен, сервис загружает `models/model.joblib`. В логе api: `модель перезагружена: registry:churn-classifier@champion/v1 заменена на local:logreg@476368a`.
+- `/reload` без MLflow выполнялся 4 мин 6 с. Клиент MLflow повторяет запрос к недоступному серверу несколько раз с растущей паузой. Столько же займёт старт api при недоступном MLflow.
+- После `docker compose start mlflow` и `/reload` сервис вернулся на `registry:churn-classifier@champion/v1`.
+
 ## Правила проекта
 
 1. **Никаких абсолютных путей.** Только `src.config.resolve()`.
